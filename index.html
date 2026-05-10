@@ -1,14 +1,11 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Raizzx Panel</title>
 
-  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Lucide -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <style>
@@ -18,28 +15,30 @@
       font-family: sans-serif;
     }
 
-    .snow {
-      position: fixed;
-      width: 4px;
-      height: 4px;
-      background: rgba(255,255,255,0.3);
-      border-radius: 50%;
-      animation: fall linear infinite;
-    }
-
-    @keyframes fall {
-      from {
-        transform: translateY(-10px);
-      }
-      to {
-        transform: translateY(100vh);
-      }
-    }
-
     .glass {
       background: rgba(255,255,255,0.03);
       backdrop-filter: blur(20px);
       border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .snow {
+      position: fixed;
+      width: 4px;
+      height: 4px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 50%;
+      animation: snow linear infinite;
+      z-index: 1;
+    }
+
+    @keyframes snow {
+      from {
+        transform: translateY(-10px);
+      }
+
+      to {
+        transform: translateY(100vh);
+      }
     }
   </style>
 </head>
@@ -49,58 +48,65 @@
   <div id="snow-container"></div>
 
   <!-- BARRA -->
-  <div class="fixed top-0 left-0 right-0 bg-purple-600 py-2 text-center text-xs font-bold uppercase tracking-widest z-50">
+  <div class="fixed top-0 left-0 right-0 bg-purple-600 py-2 text-center text-xs font-black uppercase tracking-widest z-50">
     🚀 Portal Raizzx Ativo!
   </div>
 
   <!-- NAVBAR -->
-  <nav class="fixed top-8 left-0 right-0 z-40 border-b border-white/10 bg-black/70 backdrop-blur-xl">
+  <nav class="fixed top-8 left-0 right-0 bg-black/80 backdrop-blur-xl border-b border-white/10 z-40">
+
     <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-      
+
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center font-black">
+
+        <div class="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center font-black text-lg shadow-lg">
           R
         </div>
 
-        <span class="font-black uppercase italic">
+        <span class="font-black uppercase italic tracking-tight text-sm">
           Raizzx
         </span>
+
       </div>
 
-      <button class="bg-white/5 p-2 rounded-lg hover:bg-white/10">
-        <i data-lucide="settings"></i>
+      <button
+        onclick="abrirLogin()"
+        class="bg-purple-600 hover:bg-purple-500 transition-all px-5 py-2 rounded-xl font-black text-xs uppercase tracking-widest">
+        ADM
       </button>
 
     </div>
+
   </nav>
 
-  <!-- CONTEUDO -->
-  <main class="pt-32 pb-20 px-6">
+  <!-- CONTEÚDO -->
+  <main class="pt-32 pb-20 px-6 relative z-10">
 
     <!-- PERFIL -->
     <section class="max-w-2xl mx-auto text-center">
 
       <img
+        id="profilePhoto"
         src="https://api.dicebear.com/7.x/avataaars/svg?seed=Raizzx"
         class="w-36 h-36 mx-auto rounded-full border-4 border-purple-600 shadow-2xl"
-      >
+      />
 
-      <h1 class="text-5xl font-black mt-8 italic">
+      <h1 id="profileName" class="text-5xl font-black italic mt-8">
         Raizzx
       </h1>
 
-      <p class="text-gray-400 mt-3 text-lg">
+      <p id="profileTitle" class="text-gray-400 mt-3 text-lg">
         Full-Stack Developer
       </p>
 
     </section>
 
     <!-- LINKS -->
-    <section class="max-w-xl mx-auto mt-16 space-y-5">
+    <section id="linksContainer" class="max-w-xl mx-auto mt-16 space-y-5">
 
       <a href="#"
         class="glass rounded-3xl p-6 flex items-center justify-between hover:scale-[1.02] transition-all duration-300">
-        
+
         <div>
           <h2 class="font-black text-lg uppercase italic">
             Portfólio
@@ -115,10 +121,10 @@
 
       </a>
 
-      <a href="https://www.instagram.com/pvdraizz01"
+      <a href="https://instagram.com/pvdraizz01"
         target="_blank"
         class="glass rounded-3xl p-6 flex items-center justify-between hover:scale-[1.02] transition-all duration-300">
-        
+
         <div>
           <h2 class="font-black text-lg uppercase italic">
             Instagram
@@ -135,6 +141,64 @@
 
     </section>
 
+    <!-- PAINEL ADM -->
+    <section
+      id="adminPanel"
+      style="display:none"
+      class="max-w-2xl mx-auto mt-16 glass rounded-[2rem] p-8">
+
+      <h2 class="text-3xl font-black uppercase italic mb-8">
+        Painel Administrativo
+      </h2>
+
+      <div class="space-y-5">
+
+        <div>
+          <label class="text-xs uppercase text-gray-500 font-black">
+            Nome
+          </label>
+
+          <input
+            id="adminName"
+            type="text"
+            class="w-full bg-black border border-white/10 rounded-xl p-4 mt-2 outline-none"
+          />
+        </div>
+
+        <div>
+          <label class="text-xs uppercase text-gray-500 font-black">
+            Título
+          </label>
+
+          <input
+            id="adminTitle"
+            type="text"
+            class="w-full bg-black border border-white/10 rounded-xl p-4 mt-2 outline-none"
+          />
+        </div>
+
+        <div>
+          <label class="text-xs uppercase text-gray-500 font-black">
+            Foto URL
+          </label>
+
+          <input
+            id="adminPhoto"
+            type="text"
+            class="w-full bg-black border border-white/10 rounded-xl p-4 mt-2 outline-none"
+          />
+        </div>
+
+        <button
+          onclick="salvarAlteracoes()"
+          class="w-full bg-purple-600 hover:bg-purple-500 transition-all py-4 rounded-xl font-black uppercase tracking-widest text-sm">
+          Salvar Alterações
+        </button>
+
+      </div>
+
+    </section>
+
   </main>
 
   <!-- PLAYER -->
@@ -142,19 +206,20 @@
     id="player"
     class="fixed bottom-6 right-6 glass px-4 py-3 rounded-2xl flex items-center gap-4 cursor-move z-50">
 
-    <button id="playBtn"
-      class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
-      
+    <button
+      id="playBtn"
+      class="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center">
+
       <i data-lucide="play"></i>
 
     </button>
 
     <div>
-      <p class="text-xs uppercase text-gray-500 font-bold">
+      <p class="text-xs uppercase text-gray-500 font-black">
         Playlist
       </p>
 
-      <p class="font-black text-sm italic">
+      <p class="font-black italic text-sm">
         Raizzx Radio
       </p>
     </div>
@@ -176,7 +241,7 @@
     // NEVE
     const snowContainer = document.getElementById('snow-container');
 
-    for(let i = 0; i < 50; i++) {
+    for(let i = 0; i < 60; i++) {
 
       const snow = document.createElement('div');
 
@@ -188,46 +253,66 @@
 
       snow.style.opacity = Math.random();
 
-      snow.style.width = snow.style.height =
-        (Math.random() * 4 + 2) + 'px';
+      snow.style.width = snow.style.height = (Math.random() * 4 + 2) + 'px';
 
       snowContainer.appendChild(snow);
     }
 
+    // LOGIN ADM
+    const adminUser = 'Raizzx';
+    const adminPass = 'cecilia';
+
+    function abrirLogin() {
+
+      const user = prompt('Usuário ADM:');
+      const pass = prompt('Senha ADM:');
+
+      if(user === adminUser && pass === adminPass) {
+
+        alert('Login realizado!');
+
+        document.getElementById('adminPanel').style.display = 'block';
+
+        carregarInputs();
+
+      } else {
+
+        alert('Credenciais incorretas');
+      }
+    }
+
     // PLAYER
-    const player = document.getElementById('player');
     const playBtn = document.getElementById('playBtn');
     const audio = document.getElementById('audio');
 
-    let isPlaying = false;
+    let tocando = false;
 
     playBtn.onclick = () => {
 
-      if(isPlaying) {
+      if(tocando) {
 
         audio.pause();
 
-        playBtn.innerHTML =
-          '<i data-lucide="play"></i>';
+        playBtn.innerHTML = '<i data-lucide="play"></i>';
 
       } else {
 
         audio.play();
 
-        playBtn.innerHTML =
-          '<i data-lucide="pause"></i>';
-
+        playBtn.innerHTML = '<i data-lucide="pause"></i>';
       }
 
       lucide.createIcons();
 
-      isPlaying = !isPlaying;
-    };
+      tocando = !tocando;
+    }
 
-    // DRAG PLAYER
+    // PLAYER ARRASTÁVEL
+    const player = document.getElementById('player');
+
+    let isDragging = false;
     let offsetX = 0;
     let offsetY = 0;
-    let isDragging = false;
 
     player.addEventListener('mousedown', (e) => {
 
@@ -248,6 +333,48 @@
     document.addEventListener('mouseup', () => {
       isDragging = false;
     });
+
+    // SALVAR LOCALSTORAGE
+    function salvarAlteracoes() {
+
+      const nome = document.getElementById('adminName').value;
+      const titulo = document.getElementById('adminTitle').value;
+      const foto = document.getElementById('adminPhoto').value;
+
+      localStorage.setItem('raizzx_nome', nome);
+      localStorage.setItem('raizzx_titulo', titulo);
+      localStorage.setItem('raizzx_foto', foto);
+
+      aplicarDados();
+
+      alert('Alterações salvas!');
+    }
+
+    function carregarInputs() {
+
+      document.getElementById('adminName').value = localStorage.getItem('raizzx_nome') || 'Raizzx';
+
+      document.getElementById('adminTitle').value = localStorage.getItem('raizzx_titulo') || 'Full-Stack Developer';
+
+      document.getElementById('adminPhoto').value = localStorage.getItem('raizzx_foto') || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Raizzx';
+    }
+
+    function aplicarDados() {
+
+      const nome = localStorage.getItem('raizzx_nome') || 'Raizzx';
+
+      const titulo = localStorage.getItem('raizzx_titulo') || 'Full-Stack Developer';
+
+      const foto = localStorage.getItem('raizzx_foto') || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Raizzx';
+
+      document.getElementById('profileName').innerText = nome;
+
+      document.getElementById('profileTitle').innerText = titulo;
+
+      document.getElementById('profilePhoto').src = foto;
+    }
+
+    aplicarDados();
 
   </script>
 
