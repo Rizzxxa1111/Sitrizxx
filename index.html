@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Raizzx</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #020202; }
+        .cursor-grab { cursor: grab; }
+        .cursor-grabbing { cursor: grabbing; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        // Importando ícones manualmente da biblioteca Lucide global
+        const { 
+          Lock, Globe, LogOut, ShieldCheck, Layout, ChevronRight, 
+          Plus, Trash2, Activity, Music, Play, Pause, CloudSnow, 
+          Palette, Megaphone, AlertTriangle, Settings, Save, CheckCircle,
+          ExternalLink, User, Smartphone, Monitor, GripHorizontal, Key,
+          Type, Camera
+        } = lucide;
+
+        // --- EFEITO DE NEVE ---
+        const SnowEffect = () => {
+          const canvasRef = useRef(null);
+          useEffect(() => {
+            const canvas = canvasRef.current;
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let width, height, animationFrameId;
+            const snowflakes = [];
+            const count = window.innerWidth < 768 ? 25 : 50; 
+            const resize = () => {
+              width = canvas.width = window.innerWidth;
+              height = canvas.height = window.innerHeight;
+            };
+            window.addEventListener('resize', resize);
+            resize();
+            for (let i = 0; i < count; i++) {
+              snowflakes.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                radius: Math.random() * 1.2 + 0.5,
+                speed: Math.random() * 0.3 + 0.1,
+                wind: Math.random() * 0.15 - 0.07
+              });
+            }
+            const draw = () => {
+              ctx.clearRect(0, 0, width, height);
+              ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+              ctx.beginPath();
+              snowflakes.forEach(flake => {
+                ctx.moveTo(flake.x, flake.y);
+                ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
+                flake.y += flake.speed;
+                flake.x += flake.wind;
+                if (flake.y > height) { flake.y = -5; flake.x = Math.random() * width; }
+              });
+              ctx.fill();
+              animationFrameId = requestAnimationFrame(draw);
+            };
+            draw();
+            return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(animationFrameId); };
+          }, []);
+          return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-0" />;
+        };
+
+        // --- PLAYER ARRASTÁVEL ---
+        const DraggablePlayer = ({ musicUrl, musicTitle, primaryColor, hex }) => {
+          const [position, setPosition] = useState({ x: window.innerWidth - 220, y: window.innerHeight - 100 });
+          const [isDragging, setIsDragging] = useState(false);
+          const [isPlaying, setIsPlaying] = useState(false);
+          const dragRef = useRef(null);
+          const audioRef = useRef(null);
+          const offset = useRef({ x: 0, y: 0 });
+
+          const handleStart = (clientX, clientY) => {
+            setIsDragging(true);
+            offset.current = { x: clientX - position.x, y: clientY - position.y };
+          };
+
+          const handleMove = (e) => {
+            if (!isDragging) return;
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            const newX = Math.max(10, Math.min(clientX - offset.current.x, window.innerWidth - 200));
+            const newY = Math.max(10, Math.min(clientY - offset.current.y, window.innerHeight - 80));
+            setPosition({ x: newX, y: newY });
+          };
+
+          const togglePlay = () => {
+            if (audioRef.current.paused) { audioRef.current.play(); setIsPlaying(true); }
+            else { audioRef.current.pause(); setIsPlaying(false); }
+          };
+
+          return (
+            <div onMouseMove={handleMove} onTouchMove={handleMove} onMouseUp={() => setIsDragging(false)} onTouchEnd={() => setIsDragging(false)}>
+              <audio ref={audioRef} src={musicUrl} loop />
+              <div 
+                style={{ left: `${position.x}px`, top: `${position.y}px`, borderColor: isDragging ? hex : 'rgba(255,255,255,0.1)' }}
+                className="fixed z-[1000] select-none bg-black/80 backdrop-blur-2xl border p-2 pr-4 rounded-2xl flex items-center gap-3 shadow-2xl transition-colors"
+                onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
+                onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
+              >
+                <div className="cursor-grab active:cursor-grabbing p-1 text-white/20"><GripHorizontal size={16} /></div>
+                <button onClick={(e) => { e.stopPropagation(); togglePlay(); }} style={{ backgroundColor: hex }} className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg shrink-0">
+                  {isPlaying ? <Pause size={18} fill="white" /> : <Play size={18} fill="white" className="ml-0.5" />}
+                </button>
+                <div className="pointer-events-none">
+                  <p className="text-[7px] font-black text-gray-500 uppercase tracking-widest mb-1">Playlist</p>
+                  <p className="text-[10px] font-black truncate max-w-[100px] italic leading-none text-white">{musicTitle}</p>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        // --- COMPONENTE PRINCIPAL ---
+        const App = () => {
+          const defaultData = {
+            profile: { name: 'Raizzx', title: 'Full-Stack Developer', photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Raizzx', themeColor: 'purple' },
+            config: { showSnow: true, showBroadcast: true, broadcastMessage: 'Portal Raizzx Ativo!', musicUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', musicTitle: 'Raizzx Radio', adminUser: 'Raizzx', adminPass: 'cecilia' },
+            links: [{ id: 1, name: 'Portfólio', url: '#' }, { id: 2, name: 'Instagram', url: 'https://www.instagram.com/pvdraizz01' }]
+          };
+
+          const [data, setData] = useState(defaultData);
+          const [view, setView] = useState('public');
+          const [usernameInput, setUsernameInput] = useState('');
+          const [passwordInput, setPasswordInput] = useState('');
+          const [showSavedToast, setShowSavedToast] = useState(false);
+          const [newLink, setNewLink] = useState({ name: '', url: '' });
+
+          const themes = {
+            purple: { color: 'purple-600', hex: '#9333ea' },
+            blue: { color: 'blue-600', hex: '#2563eb' },
+            emerald: { color: 'emerald-500', hex: '#10b981' },
+            rose: { color: 'rose-500', hex: '#f43f5e' }
+          };
+          const currentTheme = themes[data.profile.themeColor] || themes.purple;
+
+          const handleSave = () => {
+            localStorage.setItem('raizzx_v11', JSON.stringify(data));
+            setShowSavedToast(true);
+            setTimeout(() => setShowSavedToast(false), 2000);
+          };
+
+          return (
+            <div className="min-h-screen text-white relative overflow-x-hidden pb-20">
+              {data.config.showSnow && <SnowEffect />}
+              
+              <DraggablePlayer musicUrl={data.config.musicUrl} musicTitle={data.config.musicTitle} hex={currentTheme.hex} />
+
+              {/* Toast */}
+              {showSavedToast && <div className="fixed top-20 right-6 z-[200] bg-white text-black px-5 py-3 rounded-xl font-black text-[10px]">✓ SALVO COM SUCESSO</div>}
+
+              {/* Navbar */}
+              <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/5 bg-black/80 backdrop-blur-md h-16 flex items-center px-6 justify-between">
+                <div className="flex items-center gap-3">
+                  <div style={{ backgroundColor: currentTheme.hex }} className="w-8 h-8 rounded-lg flex items-center justify-center font-black italic">R</div>
+                  <span className="font-black text-sm uppercase italic">{data.profile.name}</span>
+                </div>
+                {view === 'admin' ? (
+                  <button onClick={() => setView('public')} className="p-2 bg-white/5 rounded-lg"><LogOut size={18}/></button>
+                ) : (
+                  <button onClick={() => setView('login')} className="p-2 bg-white/5 rounded-lg"><Lock size={18}/></button>
+                )}
+              </nav>
+
+              <main className="pt-28 px-6 max-w-4xl mx-auto">
+                {view === 'public' && (
+                  <div className="text-center space-y-8">
+                    <img src={data.profile.photo} className="w-32 h-32 rounded-full mx-auto border-4 border-white/10" />
+                    <div>
+                      <h1 className="text-4xl font-black italic uppercase">{data.profile.name}</h1>
+                      <p className="text-gray-400 mt-2">{data.profile.title}</p>
+                    </div>
+                    <div className="grid gap-4 max-w-md mx-auto">
+                      {data.links.map(link => (
+                        <a key={link.id} href={link.url} target="_blank" className="bg-white/5 border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-all font-bold uppercase text-sm tracking-widest">
+                          {link.name}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {view === 'login' && (
+                  <div className="max-w-md mx-auto bg-white/5 p-8 rounded-[2rem] border border-white/10">
+                    <h2 className="text-xl font-black mb-6 uppercase text-center">Admin Access</h2>
+                    <input className="w-full bg-black/50 border border-white/10 p-4 rounded-xl mb-4" placeholder="User" onChange={e=>setUsernameInput(e.target.value)} />
+                    <input type="password" className="w-full bg-black/50 border border-white/10 p-4 rounded-xl mb-6" placeholder="Pass" onChange={e=>setPasswordInput(e.target.value)} />
+                    <button 
+                      onClick={() => (usernameInput === data.config.adminUser && passwordInput === data.config.adminPass) ? setView('admin') : alert('Erro')}
+                      style={{ backgroundColor: currentTheme.hex }} className="w-full py-4 rounded-xl font-black uppercase"
+                    >Entrar</button>
+                  </div>
+                )}
+
+                {view === 'admin' && (
+                  <div className="space-y-6">
+                    <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
+                       <h3 className="font-black uppercase mb-4">Configurações</h3>
+                       <button onClick={handleSave} style={{ backgroundColor: currentTheme.hex }} className="w-full py-3 rounded-lg mb-4 font-black">SALVAR ALTERAÇÕES</button>
+                       <input className="w-full bg-black/50 p-3 rounded-lg border border-white/10 mb-2" value={data.profile.name} onChange={e=>setData({...data, profile: {...data.profile, name: e.target.value}})} placeholder="Nome" />
+                       <input className="w-full bg-black/50 p-3 rounded-lg border border-white/10" value={data.profile.photo} onChange={e=>setData({...data, profile: {...data.profile, photo: e.target.value}})} placeholder="URL Foto" />
+                    </div>
+                  </div>
+                )}
+              </main>
+            </div>
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
