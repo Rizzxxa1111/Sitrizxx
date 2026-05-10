@@ -1,228 +1,360 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Raizzx</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #020202; }
-        .cursor-grab { cursor: grab; }
-        .cursor-grabbing { cursor: grabbing; }
-    </style>
-</head>
-<body>
-    <div id="root"></div>
+```react
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Lock, Globe, LogOut, ShieldCheck, Layout, ChevronRight, 
+  Plus, Trash2, Activity, Music, Play, Pause, CloudSnow, 
+  Palette, Megaphone, AlertTriangle, Settings, Save, CheckCircle,
+  ExternalLink, User, Smartphone, Monitor, GripHorizontal, Key,
+  Type, Camera
+} from 'lucide-react';
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
-        // Importando ícones manualmente da biblioteca Lucide global
-        const { 
-          Lock, Globe, LogOut, ShieldCheck, Layout, ChevronRight, 
-          Plus, Trash2, Activity, Music, Play, Pause, CloudSnow, 
-          Palette, Megaphone, AlertTriangle, Settings, Save, CheckCircle,
-          ExternalLink, User, Smartphone, Monitor, GripHorizontal, Key,
-          Type, Camera
-        } = lucide;
+// --- EFEITO DE NEVE (CANVAS) ---
+const SnowEffect = () => {
+  const canvasRef = useRef(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let width, height, animationFrameId;
+    const snowflakes = [];
+    const count = window.innerWidth < 768 ? 25 : 50; 
+    const resize = () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', resize);
+    resize();
+    for (let i = 0; i < count; i++) {
+      snowflakes.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: Math.random() * 1.2 + 0.5,
+        speed: Math.random() * 0.3 + 0.1,
+        wind: Math.random() * 0.15 - 0.07
+      });
+    }
+    const draw = () => {
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.beginPath();
+      snowflakes.forEach(flake => {
+        ctx.moveTo(flake.x, flake.y);
+        ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
+        flake.y += flake.speed;
+        flake.x += flake.wind;
+        if (flake.y > height) { flake.y = -5; flake.x = Math.random() * width; }
+      });
+      ctx.fill();
+      animationFrameId = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(animationFrameId); };
+  }, []);
+  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-0" />;
+};
 
-        // --- EFEITO DE NEVE ---
-        const SnowEffect = () => {
-          const canvasRef = useRef(null);
-          useEffect(() => {
-            const canvas = canvasRef.current;
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            let width, height, animationFrameId;
-            const snowflakes = [];
-            const count = window.innerWidth < 768 ? 25 : 50; 
-            const resize = () => {
-              width = canvas.width = window.innerWidth;
-              height = canvas.height = window.innerHeight;
-            };
-            window.addEventListener('resize', resize);
-            resize();
-            for (let i = 0; i < count; i++) {
-              snowflakes.push({
-                x: Math.random() * width,
-                y: Math.random() * height,
-                radius: Math.random() * 1.2 + 0.5,
-                speed: Math.random() * 0.3 + 0.1,
-                wind: Math.random() * 0.15 - 0.07
-              });
-            }
-            const draw = () => {
-              ctx.clearRect(0, 0, width, height);
-              ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-              ctx.beginPath();
-              snowflakes.forEach(flake => {
-                ctx.moveTo(flake.x, flake.y);
-                ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
-                flake.y += flake.speed;
-                flake.x += flake.wind;
-                if (flake.y > height) { flake.y = -5; flake.x = Math.random() * width; }
-              });
-              ctx.fill();
-              animationFrameId = requestAnimationFrame(draw);
-            };
-            draw();
-            return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(animationFrameId); };
-          }, []);
-          return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-0" />;
-        };
+// --- PLAYER DE MÚSICA ARRASTÁVEL ---
+const DraggablePlayer = ({ musicUrl, musicTitle, primaryColor }) => {
+  const [position, setPosition] = useState({ x: window.innerWidth - 220, y: window.innerHeight - 100 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const dragRef = useRef(null);
+  const audioRef = useRef(null);
+  const offset = useRef({ x: 0, y: 0 });
 
-        // --- PLAYER ARRASTÁVEL ---
-        const DraggablePlayer = ({ musicUrl, musicTitle, primaryColor, hex }) => {
-          const [position, setPosition] = useState({ x: window.innerWidth - 220, y: window.innerHeight - 100 });
-          const [isDragging, setIsDragging] = useState(false);
-          const [isPlaying, setIsPlaying] = useState(false);
-          const dragRef = useRef(null);
-          const audioRef = useRef(null);
-          const offset = useRef({ x: 0, y: 0 });
+  useEffect(() => {
+    const handleResize = () => {
+      setPosition(prev => ({
+        x: Math.min(prev.x, window.innerWidth - 60),
+        y: Math.min(prev.y, window.innerHeight - 60)
+      }));
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-          const handleStart = (clientX, clientY) => {
-            setIsDragging(true);
-            offset.current = { x: clientX - position.x, y: clientY - position.y };
-          };
+  const handleStart = (clientX, clientY) => {
+    setIsDragging(true);
+    offset.current = { x: clientX - position.x, y: clientY - position.y };
+  };
 
-          const handleMove = (e) => {
-            if (!isDragging) return;
-            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-            const newX = Math.max(10, Math.min(clientX - offset.current.x, window.innerWidth - 200));
-            const newY = Math.max(10, Math.min(clientY - offset.current.y, window.innerHeight - 80));
-            setPosition({ x: newX, y: newY });
-          };
+  const handleMove = (clientX, clientY) => {
+    if (!isDragging) return;
+    const newX = Math.max(10, Math.min(clientX - offset.current.x, window.innerWidth - 200));
+    const newY = Math.max(10, Math.min(clientY - offset.current.y, window.innerHeight - 80));
+    setPosition({ x: newX, y: newY });
+  };
 
-          const togglePlay = () => {
-            if (audioRef.current.paused) { audioRef.current.play(); setIsPlaying(true); }
-            else { audioRef.current.pause(); setIsPlaying(false); }
-          };
+  const handleEnd = () => setIsDragging(false);
 
-          return (
-            <div onMouseMove={handleMove} onTouchMove={handleMove} onMouseUp={() => setIsDragging(false)} onTouchEnd={() => setIsDragging(false)}>
-              <audio ref={audioRef} src={musicUrl} loop />
-              <div 
-                style={{ left: `${position.x}px`, top: `${position.y}px`, borderColor: isDragging ? hex : 'rgba(255,255,255,0.1)' }}
-                className="fixed z-[1000] select-none bg-black/80 backdrop-blur-2xl border p-2 pr-4 rounded-2xl flex items-center gap-3 shadow-2xl transition-colors"
-                onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
-                onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
-              >
-                <div className="cursor-grab active:cursor-grabbing p-1 text-white/20"><GripHorizontal size={16} /></div>
-                <button onClick={(e) => { e.stopPropagation(); togglePlay(); }} style={{ backgroundColor: hex }} className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg shrink-0">
-                  {isPlaying ? <Pause size={18} fill="white" /> : <Play size={18} fill="white" className="ml-0.5" />}
+  const togglePlay = () => {
+    if (audioRef.current.paused) {
+      audioRef.current.play();
+      setIsPlaying(true);
+    } else {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  return (
+    <>
+      <audio ref={audioRef} src={musicUrl} loop />
+      <div 
+        ref={dragRef}
+        style={{ left: `${position.x}px`, top: `${position.y}px` }}
+        className={`fixed z-[1000] select-none touch-none bg-black/80 backdrop-blur-2xl border border-white/10 p-2 pr-4 rounded-2xl flex items-center gap-3 shadow-2xl transition-shadow ${isDragging ? 'shadow-white/10 ring-1 ring-white/20' : ''}`}
+        onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
+        onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
+        onMouseMove={(e) => handleMove(e.clientX, e.clientY)}
+        onTouchMove={(e) => handleMove(e.touches[0].clientX, e.touches[0].clientY)}
+        onMouseUp={handleEnd}
+        onMouseLeave={handleEnd}
+        onTouchEnd={handleEnd}
+      >
+        <div className="cursor-grab active:cursor-grabbing p-1 text-white/20 hover:text-white/40">
+          <GripHorizontal size={16} />
+        </div>
+        
+        <button 
+          onClick={(e) => { e.stopPropagation(); togglePlay(); }}
+          className={`w-10 h-10 rounded-full bg-${primaryColor} flex items-center justify-center text-white shadow-lg shrink-0 transition-transform active:scale-90`}
+        >
+          {isPlaying ? <Pause size={18} fill="white" /> : <Play size={18} fill="white" className="ml-0.5" />}
+        </button>
+
+        <div className="pointer-events-none">
+          <p className="text-[7px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">Playlist</p>
+          <p className="text-[10px] font-black truncate max-w-[100px] italic leading-none">{musicTitle}</p>
+        </div>
+      </div>
+    </>
+  );
+};
+
+const App = () => {
+  const defaultData = {
+    profile: {
+      name: 'Raizzx',
+      title: 'Full-Stack Developer',
+      photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Raizzx',
+      themeColor: 'purple'
+    },
+    config: {
+      showSnow: true,
+      maintenanceMode: false,
+      broadcastMessage: 'Portal Raizzx Ativo!',
+      showBroadcast: true,
+      musicUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+      musicTitle: 'Raizzx Radio',
+      adminUser: 'Raizzx',
+      adminPass: 'cecilia' 
+    },
+    links: [
+      { id: 1, name: 'Portfólio', url: '#' },
+      { id: 2, name: 'Instagram', url: 'https://www.instagram.com/pvdraizz01' }
+    ]
+  };
+
+  const [data, setData] = useState(defaultData);
+  const [view, setView] = useState('public'); // 'public', 'login', 'admin'
+  const [usernameInput, setUsernameInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [showSavedToast, setShowSavedToast] = useState(false);
+  const [newLink, setNewLink] = useState({ name: '', url: '' });
+
+  useEffect(() => {
+    const saved = localStorage.getItem('raizzx_v11_final');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setData({
+            ...defaultData,
+            ...parsed,
+            config: { ...defaultData.config, ...parsed.config },
+            profile: { ...defaultData.profile, ...parsed.profile }
+        });
+      } catch (e) { console.error(e); }
+    }
+  }, []);
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (usernameInput === data.config.adminUser && passwordInput === data.config.adminPass) {
+      setView('admin');
+      setUsernameInput('');
+      setPasswordInput('');
+    } else {
+      alert("Credenciais Administrativas Incorretas.");
+    }
+  };
+
+  const handleSave = () => {
+    localStorage.setItem('raizzx_v11_final', JSON.stringify(data));
+    setShowSavedToast(true);
+    setTimeout(() => setShowSavedToast(false), 2000);
+  };
+
+  const themes = {
+    purple: { color: 'purple-600', shadow: 'rgba(147, 51, 234, 0.5)', hex: '#9333ea' },
+    blue: { color: 'blue-600', shadow: 'rgba(37, 99, 235, 0.5)', hex: '#2563eb' },
+    emerald: { color: 'emerald-500', shadow: 'rgba(16, 185, 129, 0.5)', hex: '#10b981' },
+    rose: { color: 'rose-500', shadow: 'rgba(244, 63, 94, 0.5)', hex: '#f43f5e' }
+  };
+  
+  const currentTheme = themes[data.profile.themeColor] || themes.purple;
+  const primaryColor = currentTheme.color;
+
+  return (
+    <div className="min-h-screen bg-[#020202] text-white font-sans selection:bg-white/20 relative overflow-x-hidden">
+      {data.config.showSnow && !data.config.maintenanceMode && <SnowEffect />}
+
+      {showSavedToast && (
+        <div className="fixed top-20 right-6 z-[200] bg-white text-black px-5 py-3 rounded-xl font-black text-[10px] flex items-center gap-2 animate-in slide-in-from-right-5 shadow-2xl">
+          <CheckCircle size={14} className="text-green-600" /> ALTERAÇÕES GRAVADAS
+        </div>
+      )}
+
+      {data.config.showBroadcast && !data.config.maintenanceMode && (
+        <div className={`fixed top-0 inset-x-0 z-[100] bg-${primaryColor} py-2 text-[9px] font-black uppercase text-center tracking-widest flex items-center justify-center gap-2 px-4 shadow-lg shadow-${primaryColor}/20`}>
+          <Megaphone size={12} /> {data.config.broadcastMessage}
+        </div>
+      )}
+
+      <nav className={`fixed top-${data.config.showBroadcast ? '8' : '0'} inset-x-0 z-50 border-b border-white/5 bg-black/80 backdrop-blur-md transition-all duration-300`}>
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-lg bg-${primaryColor} flex items-center justify-center font-black italic shadow-lg`}>R</div>
+            <span className="font-black text-sm italic uppercase tracking-tight">{data.profile.name}</span>
+          </div>
+          {view === 'admin' && (
+            <button onClick={() => setView('public')} className="p-2 text-gray-500 hover:text-white bg-white/5 rounded-lg transition-colors"><LogOut size={18}/></button>
+          )}
+        </div>
+      </nav>
+
+      <main className="pt-28 pb-20 px-6 max-w-6xl mx-auto relative z-10">
+        
+        {view === 'login' && (
+          /* TELA DE LOGIN */
+          <div className="max-w-md mx-auto mt-12 p-10 bg-white/[0.02] border border-white/10 rounded-[2.5rem] backdrop-blur-xl text-center shadow-2xl animate-in fade-in duration-300">
+            <ShieldCheck size={40} className={`mx-auto mb-6 text-${primaryColor}`} />
+            <h2 className="text-2xl font-black italic mb-8 uppercase tracking-tighter">Acesso Administrativo</h2>
+            <form onSubmit={handleLogin} className="space-y-4 text-left">
+              <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase text-gray-500 ml-1">Utilizador</label>
+                <input className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-white/20 transition-all" value={usernameInput} onChange={e=>setUsernameInput(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase text-gray-500 ml-1">Senha</label>
+                <input type="password" className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-white/20 transition-all" value={passwordInput} onChange={e=>setPasswordInput(e.target.value)} />
+              </div>
+              <button className={`w-full bg-${primaryColor} py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:brightness-110 active:scale-95 transition-all mt-4`}>Entrar no Sistema</button>
+            </form>
+            <div className="mt-12 pt-8 border-t border-white/5">
+                <button onClick={() => setView('public')} className={`group relative overflow-hidden px-8 py-3.5 rounded-full border border-${primaryColor}/30 hover:border-${primaryColor} transition-all duration-500`}>
+                  <span className={`relative flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.4em] text-${primaryColor} animate-pulse`} style={{ textShadow: `0 0 8px ${currentTheme.hex}` }}>
+                    entrar como visitante
+                  </span>
                 </button>
-                <div className="pointer-events-none">
-                  <p className="text-[7px] font-black text-gray-500 uppercase tracking-widest mb-1">Playlist</p>
-                  <p className="text-[10px] font-black truncate max-w-[100px] italic leading-none text-white">{musicTitle}</p>
+            </div>
+          </div>
+        )}
+
+        {view === 'admin' && (
+          /* PAINEL ADMINISTRATIVO */
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in duration-500">
+            {/* Coluna Esquerda: Definições Gerais */}
+            <div className="lg:col-span-4 space-y-6">
+              <div className="bg-white/[0.03] p-6 rounded-[2rem] border border-white/10 space-y-6 shadow-xl sticky top-28">
+                <button onClick={handleSave} className={`w-full bg-${primaryColor} p-4 rounded-xl font-black text-[10px] uppercase flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all`}>
+                  <Save size={16}/> Guardar Todas as Alterações
+                </button>
+                
+                {/* CONFIGS DA BARRA SUPERIOR (MENSAGEM) */}
+                <div className="pt-4 border-t border-white/5 space-y-4">
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2"><Megaphone size={14}/> Barra de Transmissão</p>
+                  <div className="space-y-3">
+                    <button onClick={()=>setData({...data, config:{...data.config, showBroadcast:!data.config.showBroadcast}})} className={`w-full p-3 rounded-xl flex justify-between items-center text-[9px] font-black uppercase ${data.config.showBroadcast ? `bg-${primaryColor}/20 text-${primaryColor}` : 'bg-white/5 text-gray-600'}`}>
+                        Exibir Barra <span>{data.config.showBroadcast ? 'ON' : 'OFF'}</span>
+                    </button>
+                    <div className="space-y-1">
+                      <label className="text-[7px] font-black text-gray-600 uppercase ml-1">Editar Mensagem</label>
+                      <input className="w-full bg-black/40 border border-white/10 p-3 rounded-xl text-xs outline-none focus:border-white/20 transition-all" value={data.config.broadcastMessage} onChange={e=>setData({...data, config:{...data.config, broadcastMessage:e.target.value}})} placeholder="Ex: Portal Raizzx Ativo!" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/5 space-y-4">
+                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2"><Palette size={14}/> Tema Visual</p>
+                   <div className="grid grid-cols-4 gap-2">
+                     {Object.keys(themes).map(t => (
+                       <button key={t} onClick={()=>setData({...data, profile:{...data.profile, themeColor:t}})} className={`h-8 rounded-lg border-2 ${data.profile.themeColor === t ? 'border-white' : 'border-transparent'} bg-${themes[t].color}`} />
+                     ))}
+                   </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/5 space-y-4">
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2"><Lock size={14}/> Credenciais ADM</p>
+                  <div className="space-y-2">
+                    <input className="w-full bg-black/40 border border-white/10 p-3 rounded-xl text-xs outline-none" placeholder="Usuário" value={data.config.adminUser} onChange={e=>setData({...data, config:{...data.config, adminUser:e.target.value}})} />
+                    <input type="text" className="w-full bg-black/40 border border-white/10 p-3 rounded-xl text-xs outline-none" placeholder="Senha" value={data.config.adminPass} onChange={e=>setData({...data, config:{...data.config, adminPass:e.target.value}})} />
+                  </div>
                 </div>
               </div>
             </div>
-          );
-        };
 
-        // --- COMPONENTE PRINCIPAL ---
-        const App = () => {
-          const defaultData = {
-            profile: { name: 'Raizzx', title: 'Full-Stack Developer', photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Raizzx', themeColor: 'purple' },
-            config: { showSnow: true, showBroadcast: true, broadcastMessage: 'Portal Raizzx Ativo!', musicUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', musicTitle: 'Raizzx Radio', adminUser: 'Raizzx', adminPass: 'cecilia' },
-            links: [{ id: 1, name: 'Portfólio', url: '#' }, { id: 2, name: 'Instagram', url: 'https://www.instagram.com/pvdraizz01' }]
-          };
-
-          const [data, setData] = useState(defaultData);
-          const [view, setView] = useState('public');
-          const [usernameInput, setUsernameInput] = useState('');
-          const [passwordInput, setPasswordInput] = useState('');
-          const [showSavedToast, setShowSavedToast] = useState(false);
-          const [newLink, setNewLink] = useState({ name: '', url: '' });
-
-          const themes = {
-            purple: { color: 'purple-600', hex: '#9333ea' },
-            blue: { color: 'blue-600', hex: '#2563eb' },
-            emerald: { color: 'emerald-500', hex: '#10b981' },
-            rose: { color: 'rose-500', hex: '#f43f5e' }
-          };
-          const currentTheme = themes[data.profile.themeColor] || themes.purple;
-
-          const handleSave = () => {
-            localStorage.setItem('raizzx_v11', JSON.stringify(data));
-            setShowSavedToast(true);
-            setTimeout(() => setShowSavedToast(false), 2000);
-          };
-
-          return (
-            <div className="min-h-screen text-white relative overflow-x-hidden pb-20">
-              {data.config.showSnow && <SnowEffect />}
-              
-              <DraggablePlayer musicUrl={data.config.musicUrl} musicTitle={data.config.musicTitle} hex={currentTheme.hex} />
-
-              {/* Toast */}
-              {showSavedToast && <div className="fixed top-20 right-6 z-[200] bg-white text-black px-5 py-3 rounded-xl font-black text-[10px]">✓ SALVO COM SUCESSO</div>}
-
-              {/* Navbar */}
-              <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/5 bg-black/80 backdrop-blur-md h-16 flex items-center px-6 justify-between">
-                <div className="flex items-center gap-3">
-                  <div style={{ backgroundColor: currentTheme.hex }} className="w-8 h-8 rounded-lg flex items-center justify-center font-black italic">R</div>
-                  <span className="font-black text-sm uppercase italic">{data.profile.name}</span>
-                </div>
-                {view === 'admin' ? (
-                  <button onClick={() => setView('public')} className="p-2 bg-white/5 rounded-lg"><LogOut size={18}/></button>
-                ) : (
-                  <button onClick={() => setView('login')} className="p-2 bg-white/5 rounded-lg"><Lock size={18}/></button>
-                )}
-              </nav>
-
-              <main className="pt-28 px-6 max-w-4xl mx-auto">
-                {view === 'public' && (
-                  <div className="text-center space-y-8">
-                    <img src={data.profile.photo} className="w-32 h-32 rounded-full mx-auto border-4 border-white/10" />
-                    <div>
-                      <h1 className="text-4xl font-black italic uppercase">{data.profile.name}</h1>
-                      <p className="text-gray-400 mt-2">{data.profile.title}</p>
+            {/* Coluna Direita: Perfil e Links */}
+            <div className="lg:col-span-8 space-y-6">
+               <div className="bg-white/[0.03] p-8 rounded-[2.5rem] border border-white/10 space-y-8 shadow-xl">
+                  <h3 className="font-black uppercase italic tracking-widest text-xs flex items-center gap-2 pb-4 border-b border-white/5"><Settings size={18} className={`text-${primaryColor}`}/> Perfil & Links</h3>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <label className="text-[8px] font-black text-gray-500 uppercase ml-1">Nome de Exibição</label>
+                      <input className="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-white/20 transition-all" value={data.profile.name} onChange={e=>setData({...data, profile:{...data.profile, name:e.target.value}})} />
                     </div>
-                    <div className="grid gap-4 max-w-md mx-auto">
-                      {data.links.map(link => (
-                        <a key={link.id} href={link.url} target="_blank" className="bg-white/5 border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-all font-bold uppercase text-sm tracking-widest">
-                          {link.name}
-                        </a>
+                    <div className="space-y-1">
+                      <label className="text-[8px] font-black text-gray-500 uppercase ml-1">Subtítulo / Função</label>
+                      <input className="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-white/20 transition-all" value={data.profile.title} onChange={e=>setData({...data, profile:{...data.profile, title:e.target.value}})} />
+                    </div>
+                    <div className="sm:col-span-2 space-y-1">
+                      <label className="text-[8px] font-black text-gray-500 uppercase ml-1 flex items-center gap-2"><Camera size={10}/> URL da Foto de Perfil</label>
+                      <input className="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-[10px] font-mono outline-none focus:border-white/20 transition-all" value={data.profile.photo} onChange={e=>setData({...data, profile:{...data.profile, photo:e.target.value}})} placeholder="https://..." />
+                    </div>
+                  </div>
+
+                  <div className="pt-6 space-y-6">
+                    <p className="text-[10px] font-black text-gray-400 uppercase border-b border-white/5 pb-2 flex items-center gap-2"><Layout size={14}/> Gestão de Links</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end bg-black/20 p-5 rounded-2xl border border-white/5">
+                       <div className="sm:col-span-5 space-y-1">
+                          <label className="text-[7px] font-black text-gray-600 uppercase ml-1">Título</label>
+                          <input className="w-full bg-black border border-white/10 p-3 rounded-xl text-sm outline-none" placeholder="Ex: GitHub" value={newLink.name} onChange={e=>setNewLink({...newLink, name:e.target.value})} />
+                       </div>
+                       <div className="sm:col-span-5 space-y-1">
+                          <label className="text-[7px] font-black text-gray-600 uppercase ml-1">URL</label>
+                          <input className="w-full bg-black border border-white/10 p-3 rounded-xl text-sm outline-none" placeholder="https://..." value={newLink.url} onChange={e=>setNewLink({...newLink, url:e.target.value})} />
+                       </div>
+                       <button onClick={()=>{ if(newLink.name && newLink.url) { setData({...data, links: [...data.links, {id: Date.now(), ...newLink}]}); setNewLink({name:'', url:''}); } }} className={`sm:col-span-2 bg-${primaryColor} h-[46px] rounded-xl flex items-center justify-center shadow-lg active:scale-95 transition-all`}><Plus/></button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {data.links.map(l => (
+                        <div key={l.id} className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-white/5 group hover:border-white/10 transition-all">
+                          <div className="truncate">
+                            <p className="font-black text-[10px] uppercase italic tracking-tighter truncate">{l.name}</p>
+                            <p className="text-[8px] text-gray-600 truncate">{l.url}</p>
+                          </div>
+                          <button onClick={()=>setData({...data, links: data.links.filter(x=>x.id!==l.id)})} className="text-gray-700 hover:text-red-500 transition-colors p-2"><Trash2 size={16}/></button>
+                        </div>
                       ))}
                     </div>
                   </div>
-                )}
-
-                {view === 'login' && (
-                  <div className="max-w-md mx-auto bg-white/5 p-8 rounded-[2rem] border border-white/10">
-                    <h2 className="text-xl font-black mb-6 uppercase text-center">Admin Access</h2>
-                    <input className="w-full bg-black/50 border border-white/10 p-4 rounded-xl mb-4" placeholder="User" onChange={e=>setUsernameInput(e.target.value)} />
-                    <input type="password" className="w-full bg-black/50 border border-white/10 p-4 rounded-xl mb-6" placeholder="Pass" onChange={e=>setPasswordInput(e.target.value)} />
-                    <button 
-                      onClick={() => (usernameInput === data.config.adminUser && passwordInput === data.config.adminPass) ? setView('admin') : alert('Erro')}
-                      style={{ backgroundColor: currentTheme.hex }} className="w-full py-4 rounded-xl font-black uppercase"
-                    >Entrar</button>
-                  </div>
-                )}
-
-                {view === 'admin' && (
-                  <div className="space-y-6">
-                    <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
-                       <h3 className="font-black uppercase mb-4">Configurações</h3>
-                       <button onClick={handleSave} style={{ backgroundColor: currentTheme.hex }} className="w-full py-3 rounded-lg mb-4 font-black">SALVAR ALTERAÇÕES</button>
-                       <input className="w-full bg-black/50 p-3 rounded-lg border border-white/10 mb-2" value={data.profile.name} onChange={e=>setData({...data, profile: {...data.profile, name: e.target.value}})} placeholder="Nome" />
-                       <input className="w-full bg-black/50 p-3 rounded-lg border border-white/10" value={data.profile.photo} onChange={e=>setData({...data, profile: {...data.profile, photo: e.target.value}})} placeholder="URL Foto" />
-                    </div>
-                  </div>
-                )}
-              </main>
+               </div>
             </div>
-          );
-        };
+          </div>
+        )}
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+        {view === 'public' && (
+          /* VISTA PÚBLICA (ABRE PRIMEIRO) */
+          <div className="max-w-2xl mx-auto text-center space-y-12 animate-in fade-in duration-1
