@@ -1,762 +1,492 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Raizzx Portal</title>
 
-<title>Portal Raizzx</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
-
-<style>
-
-body{
-    background:#020202;
-    overflow-x:hidden;
-    font-family:Arial,sans-serif;
-}
-
-.snow{
-    position:fixed;
-    top:-10px;
-    width:4px;
-    height:4px;
-    background:white;
-    border-radius:50%;
-    opacity:.2;
-    animation:fall linear infinite;
-    z-index:1;
-}
-
-@keyframes fall{
-    0%{
-        transform:translateY(-10px);
+  <style>
+    body{
+      background:#020202;
+      overflow-x:hidden;
+      font-family:sans-serif;
     }
-    100%{
-        transform:translateY(110vh);
+
+    canvas{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:0;
     }
-}
 
-.player{
-    position:fixed;
-    right:20px;
-    bottom:20px;
-    z-index:999;
-    cursor:move;
-}
+    .player{
+      position:fixed;
+      z-index:999;
+      width:210px;
+      background:rgba(0,0,0,.8);
+      backdrop-filter:blur(20px);
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:20px;
+      padding:10px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      left:calc(100vw - 230px);
+      top:calc(100vh - 100px);
+      cursor:grab;
+      user-select:none;
+    }
 
-.glow{
-    box-shadow:0 0 20px rgba(168,85,247,.5);
-}
+    .player button{
+      width:42px;
+      height:42px;
+      border-radius:999px;
+      background:#9333ea;
+      color:white;
+      border:none;
+      cursor:pointer;
+      font-size:18px;
+      font-weight:bold;
+    }
 
-</style>
+    .broadcast{
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      z-index:100;
+      background:#9333ea;
+      padding:10px;
+      text-align:center;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.3em;
+      text-transform:uppercase;
+      color:white;
+    }
+
+    nav{
+      position:fixed;
+      top:40px;
+      left:0;
+      right:0;
+      z-index:50;
+      background:rgba(0,0,0,.8);
+      backdrop-filter:blur(12px);
+      border-bottom:1px solid rgba(255,255,255,.05);
+    }
+
+    .nav-content{
+      max-width:1200px;
+      margin:auto;
+      height:70px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 20px;
+    }
+
+    .logo{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    .logo-box{
+      width:35px;
+      height:35px;
+      border-radius:10px;
+      background:#9333ea;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      color:white;
+    }
+
+    .hero{
+      position:relative;
+      z-index:10;
+      padding-top:180px;
+      padding-bottom:80px;
+      text-align:center;
+    }
+
+    .profile{
+      width:130px;
+      height:130px;
+      border-radius:999px;
+      margin:auto;
+      border:4px solid rgba(255,255,255,.1);
+      object-fit:cover;
+      box-shadow:0 0 40px rgba(147,51,234,.4);
+    }
+
+    .links{
+      max-width:500px;
+      margin:40px auto 0;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+      padding:0 20px;
+    }
+
+    .link{
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      padding:18px;
+      border-radius:24px;
+      text-decoration:none;
+      color:white;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.15em;
+      transition:.3s;
+      backdrop-filter:blur(10px);
+    }
+
+    .link:hover{
+      transform:translateY(-3px);
+      border-color:#9333ea;
+      box-shadow:0 0 30px rgba(147,51,234,.2);
+    }
+
+    .admin-btn{
+      margin-top:50px;
+      display:inline-block;
+      border:1px solid rgba(147,51,234,.4);
+      padding:14px 35px;
+      border-radius:999px;
+      color:#9333ea;
+      text-decoration:none;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.4em;
+      text-transform:uppercase;
+      transition:.3s;
+    }
+
+    .admin-btn:hover{
+      background:#9333ea;
+      color:white;
+    }
+
+    .login{
+      display:none;
+      position:relative;
+      z-index:20;
+      max-width:420px;
+      margin:180px auto;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:40px;
+      padding:40px;
+      backdrop-filter:blur(20px);
+    }
+
+    .login input{
+      width:100%;
+      background:black;
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:14px;
+      padding:15px;
+      color:white;
+      margin-top:8px;
+      outline:none;
+    }
+
+    .login button{
+      width:100%;
+      background:#9333ea;
+      border:none;
+      border-radius:14px;
+      padding:15px;
+      margin-top:20px;
+      color:white;
+      font-weight:900;
+      cursor:pointer;
+    }
+
+    .admin-panel{
+      display:none;
+      position:relative;
+      z-index:20;
+      max-width:900px;
+      margin:160px auto;
+      padding:20px;
+    }
+
+    .card{
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:30px;
+      padding:30px;
+      backdrop-filter:blur(20px);
+    }
+
+    .admin-panel input{
+      width:100%;
+      background:black;
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:14px;
+      padding:14px;
+      color:white;
+      margin-top:10px;
+    }
+
+    .save-btn{
+      width:100%;
+      background:#9333ea;
+      border:none;
+      border-radius:14px;
+      padding:16px;
+      color:white;
+      font-weight:900;
+      margin-top:20px;
+      cursor:pointer;
+    }
+  </style>
 </head>
+<body>
 
-<body class="text-white">
-
-<!-- NEVE -->
-<div id="snow-container"></div>
-
-<!-- BROADCAST -->
-<div id="broadcastBar"
-class="fixed top-0 left-0 w-full bg-purple-600 py-2 text-center text-xs font-black uppercase z-50 tracking-widest">
-📢 PORTAL RAIZZX ATIVO!
+<div class="broadcast">
+  📢 PORTAL RAIZZX ATIVO!
 </div>
 
-<!-- NAVBAR -->
-<nav class="fixed top-8 left-0 w-full border-b border-white/10 bg-black/80 backdrop-blur-xl z-40">
+<nav>
+  <div class="nav-content">
+    <div class="logo">
+      <div class="logo-box">R</div>
+      <span class="text-white font-black uppercase italic tracking-wide">
+        Raizzx
+      </span>
+    </div>
 
-<div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-
-<div class="flex items-center gap-3">
-
-<div class="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center font-black glow">
-R
-</div>
-
-<h1 id="navbarName"
-class="font-black italic uppercase text-sm tracking-wider">
-Raizzx
-</h1>
-
-</div>
-
-<button onclick="logout()"
-class="bg-white/10 hover:bg-white/20 transition p-2 rounded-xl">
-<i data-lucide="log-out"></i>
-</button>
-
-</div>
-
+    <button onclick="openLogin()" class="text-gray-400 hover:text-white">
+      ADM
+    </button>
+  </div>
 </nav>
 
-<!-- LOGIN -->
-<section id="loginPage"
-class="min-h-screen flex items-center justify-center px-5 relative z-10">
-
-<div
-class="w-full max-w-md bg-white/[0.03] border border-white/10 rounded-[40px] p-10 backdrop-blur-xl shadow-2xl">
-
-<div class="text-center">
-
-<div
-class="w-20 h-20 rounded-full bg-purple-600 mx-auto flex items-center justify-center mb-6 glow">
-<i data-lucide="shield-check"></i>
-</div>
-
-<h1 class="text-3xl font-black italic uppercase mb-10">
-Painel Administrativo
-</h1>
-
-</div>
-
-<div class="space-y-4">
-
-<input
-id="user"
-type="text"
-placeholder="Usuário"
-class="w-full bg-black/50 border border-white/10 rounded-xl p-4 outline-none">
-
-<input
-id="pass"
-type="password"
-placeholder="Senha"
-class="w-full bg-black/50 border border-white/10 rounded-xl p-4 outline-none">
-
-<button
-onclick="login()"
-class="w-full bg-purple-600 hover:brightness-110 transition py-4 rounded-xl font-black uppercase glow">
-Entrar
-</button>
-
-</div>
-
-<button
-onclick="visitor()"
-class="w-full mt-8 border border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white transition rounded-full py-3 uppercase font-black">
-Entrar como visitante
-</button>
-
-</div>
-
-</section>
-
-<!-- SITE -->
-<section id="sitePage" class="hidden relative z-10">
-
-<!-- HERO -->
-<div class="pt-40 pb-20 px-6">
-
-<div class="max-w-5xl mx-auto text-center">
-
-<img
-id="avatar"
-src="https://api.dicebear.com/7.x/avataaars/svg?seed=Raizzx"
-class="w-40 h-40 rounded-full mx-auto mb-8 border-4 border-purple-600 bg-white glow">
-
-<h1
-id="profileName"
-class="text-5xl md:text-6xl font-black italic uppercase mb-4">
-Raizzx
-</h1>
-
-<p
-id="profileTitle"
-class="text-gray-400 text-lg mb-10">
-Full-Stack Developer
-</p>
-
-<div
-id="publicLinks"
-class="grid gap-4 max-w-2xl mx-auto">
-</div>
-
-</div>
-
-</div>
-
-<!-- ADMIN PANEL -->
-<div id="adminPanel"
-class="hidden max-w-6xl mx-auto px-6 pb-20">
-
-<div class="grid lg:grid-cols-2 gap-8">
-
-<!-- PERFIL -->
-<div class="bg-white/[0.03] border border-white/10 rounded-[35px] p-8">
-
-<h2 class="text-2xl font-black uppercase mb-8">
-Perfil
-</h2>
-
-<div class="space-y-4">
-
-<input
-id="nameInput"
-type="text"
-placeholder="Nome"
-class="w-full bg-black/50 border border-white/10 rounded-xl p-4">
-
-<input
-id="titleInput"
-type="text"
-placeholder="Título"
-class="w-full bg-black/50 border border-white/10 rounded-xl p-4">
-
-<input
-id="photoInput"
-type="text"
-placeholder="Link da foto"
-class="w-full bg-black/50 border border-white/10 rounded-xl p-4">
-
-<button
-onclick="saveProfile()"
-class="w-full bg-purple-600 py-4 rounded-xl font-black uppercase glow">
-Salvar Perfil
-</button>
-
-</div>
-
-</div>
-
-<!-- CONFIG -->
-<div class="bg-white/[0.03] border border-white/10 rounded-[35px] p-8">
-
-<h2 class="text-2xl font-black uppercase mb-8">
-Configurações
-</h2>
-
-<div class="space-y-4">
-
-<input
-id="broadcastInput"
-type="text"
-placeholder="Mensagem Broadcast"
-class="w-full bg-black/50 border border-white/10 rounded-xl p-4">
-
-<input
-id="musicInput"
-type="text"
-placeholder="URL da música"
-class="w-full bg-black/50 border border-white/10 rounded-xl p-4">
-
-<select
-id="themeSelect"
-class="w-full bg-black/50 border border-white/10 rounded-xl p-4">
-
-<option value="purple">Roxo</option>
-<option value="blue">Azul</option>
-<option value="red">Vermelho</option>
-<option value="green">Verde</option>
-
-</select>
-
-<button
-onclick="saveConfig()"
-class="w-full bg-purple-600 py-4 rounded-xl font-black uppercase glow">
-Salvar Config
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- LINKS -->
-<div
-class="bg-white/[0.03] border border-white/10 rounded-[35px] p-8 mt-8">
-
-<h2 class="text-2xl font-black uppercase mb-8">
-Gerenciar Links
-</h2>
-
-<div class="grid md:grid-cols-3 gap-4">
-
-<input
-id="linkName"
-type="text"
-placeholder="Nome"
-class="bg-black/50 border border-white/10 rounded-xl p-4">
-
-<input
-id="linkUrl"
-type="text"
-placeholder="https://..."
-class="bg-black/50 border border-white/10 rounded-xl p-4">
-
-<button
-onclick="addLink()"
-class="bg-purple-600 rounded-xl font-black uppercase glow">
-Adicionar
-</button>
-
-</div>
-
-<div
-id="adminLinks"
-class="grid gap-4 mt-8">
-</div>
-
-</div>
-
-</div>
-
-</section>
+<canvas id="snow"></canvas>
 
 <!-- PLAYER -->
-<div
-class="player bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl p-3 flex items-center gap-3">
+<div class="player" id="player">
+  <button id="playBtn">▶</button>
 
-<button
-onclick="toggleMusic()"
-class="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center glow">
-▶
-</button>
+  <div>
+    <p style="font-size:8px;color:#666;font-weight:900;text-transform:uppercase;">
+      Playlist
+    </p>
 
-<div>
-
-<p class="text-[10px] uppercase text-gray-500">
-Playlist
-</p>
-
-<p class="text-xs font-bold">
-Raizzx Radio
-</p>
-
+    <p style="font-size:11px;font-weight:900;font-style:italic;">
+      Raizzx Radio
+    </p>
+  </div>
 </div>
 
-</div>
-
-<audio
-id="music"
-loop
-src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">
+<audio 
+  id="audio"
+  src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+  loop>
 </audio>
 
+<!-- PÚBLICO -->
+<section class="hero" id="publicPage">
+
+  <img 
+    class="profile"
+    src="https://api.dicebear.com/7.x/avataaars/svg?seed=Raizzx"
+  />
+
+  <h1 class="text-white text-5xl font-black italic mt-8">
+    Raizzx
+  </h1>
+
+  <p class="text-gray-400 mt-3 uppercase tracking-[0.3em] text-xs">
+    Full-Stack Developer
+  </p>
+
+  <div class="links">
+    
+    <a href="#" class="link">
+      Portfólio
+    </a>
+
+    <a 
+      href="https://www.instagram.com/pvdraizz01"
+      target="_blank"
+      class="link">
+      Instagram
+    </a>
+
+  </div>
+
+  <a href="#" onclick="openLogin()" class="admin-btn">
+    Entrar ADM
+  </a>
+
+</section>
+
+<!-- LOGIN -->
+<section class="login" id="loginPage">
+
+  <h2 class="text-white text-3xl font-black italic text-center mb-8 uppercase">
+    Acesso Administrativo
+  </h2>
+
+  <input type="text" id="user" placeholder="Usuário">
+  <input type="password" id="pass" placeholder="Senha">
+
+  <button onclick="login()">
+    Entrar no Sistema
+  </button>
+
+</section>
+
+<!-- ADMIN -->
+<section class="admin-panel" id="adminPage">
+
+  <div class="card">
+
+    <h2 class="text-white text-3xl font-black italic mb-8 uppercase">
+      Painel Administrativo
+    </h2>
+
+    <label class="text-gray-500 text-xs uppercase">
+      Nome
+    </label>
+
+    <input type="text" value="Raizzx">
+
+    <label class="text-gray-500 text-xs uppercase mt-5 block">
+      Subtítulo
+    </label>
+
+    <input type="text" value="Full-Stack Developer">
+
+    <label class="text-gray-500 text-xs uppercase mt-5 block">
+      URL da Foto
+    </label>
+
+    <input 
+      type="text"
+      value="https://api.dicebear.com/7.x/avataaars/svg?seed=Raizzx">
+
+    <button class="save-btn">
+      Salvar Alterações
+    </button>
+
+  </div>
+
+</section>
+
 <script>
+  // LOGIN
+  function openLogin(){
+    document.getElementById('publicPage').style.display='none';
+    document.getElementById('loginPage').style.display='block';
+  }
+
+  function login(){
+    const user = document.getElementById('user').value;
+    const pass = document.getElementById('pass').value;
+
+    if(user === 'Raizzx' && pass === 'cecilia'){
+      document.getElementById('loginPage').style.display='none';
+      document.getElementById('adminPage').style.display='block';
+    }else{
+      alert('Credenciais incorretas');
+    }
+  }
+
+  // PLAYER
+  const audio = document.getElementById('audio');
+  const playBtn = document.getElementById('playBtn');
+
+  playBtn.onclick = () => {
+    if(audio.paused){
+      audio.play();
+      playBtn.innerHTML='❚❚';
+    }else{
+      audio.pause();
+      playBtn.innerHTML='▶';
+    }
+  };
+
+  // DRAG PLAYER
+  const player = document.getElementById('player');
+
+  let isDragging = false;
+  let offsetX, offsetY;
+
+  player.addEventListener('mousedown', e=>{
+    isDragging = true;
+    offsetX = e.clientX - player.offsetLeft;
+    offsetY = e.clientY - player.offsetTop;
+  });
+
+  document.addEventListener('mousemove', e=>{
+    if(!isDragging) return;
+
+    player.style.left = (e.clientX - offsetX)+'px';
+    player.style.top = (e.clientY - offsetY)+'px';
+  });
+
+  document.addEventListener('mouseup', ()=>{
+    isDragging = false;
+  });
+
+  // NEVE
+  const canvas = document.getElementById('snow');
+  const ctx = canvas.getContext('2d');
+
+  let w,h;
+
+  function resize(){
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+
+  resize();
+
+  window.addEventListener('resize', resize);
+
+  const snowflakes = [];
+
+  for(let i=0;i<60;i++){
+    snowflakes.push({
+      x:Math.random()*w,
+      y:Math.random()*h,
+      r:Math.random()*2+1,
+      s:Math.random()*1+0.3
+    });
+  }
+
+  function snow(){
+    ctx.clearRect(0,0,w,h);
+
+    ctx.fillStyle='rgba(255,255,255,.15)';
+
+    snowflakes.forEach(flake=>{
+      ctx.beginPath();
+      ctx.arc(flake.x,flake.y,flake.r,0,Math.PI*2);
+      ctx.fill();
+
+      flake.y += flake.s;
+
+      if(flake.y > h){
+        flake.y = -10;
+        flake.x = Math.random()*w;
+      }
+    });
+
+    requestAnimationFrame(snow);
+  }
 
-lucide.createIcons();
-
-let isAdmin = false;
-
-// LOGIN
-function login(){
-
-const user =
-document.getElementById("user").value;
-
-const pass =
-document.getElementById("pass").value;
-
-if(user === "Raizzx" && pass === "cecilia"){
-
-isAdmin = true;
-
-document.getElementById("loginPage")
-.classList.add("hidden");
-
-document.getElementById("sitePage")
-.classList.remove("hidden");
-
-document.getElementById("adminPanel")
-.classList.remove("hidden");
-
-}else{
-
-alert("Credenciais incorretas");
-
-}
-
-}
-
-function visitor(){
-
-document.getElementById("loginPage")
-.classList.add("hidden");
-
-document.getElementById("sitePage")
-.classList.remove("hidden");
-
-}
-
-function logout(){
-
-location.reload();
-
-}
-
-// PERFIL
-function saveProfile(){
-
-const name =
-document.getElementById("nameInput").value;
-
-const title =
-document.getElementById("titleInput").value;
-
-const photo =
-document.getElementById("photoInput").value;
-
-if(name){
-
-document.getElementById("profileName")
-.innerText = name;
-
-document.getElementById("navbarName")
-.innerText = name;
-
-localStorage.setItem("profileName", name);
-
-}
-
-if(title){
-
-document.getElementById("profileTitle")
-.innerText = title;
-
-localStorage.setItem("profileTitle", title);
-
-}
-
-if(photo){
-
-document.getElementById("avatar")
-.src = photo;
-
-localStorage.setItem("profilePhoto", photo);
-
-}
-
-alert("Perfil salvo!");
-
-}
-
-// CONFIG
-function saveConfig(){
-
-const broadcast =
-document.getElementById("broadcastInput").value;
-
-const music =
-document.getElementById("musicInput").value;
-
-const theme =
-document.getElementById("themeSelect").value;
-
-if(broadcast){
-
-document.getElementById("broadcastBar")
-.innerHTML = "📢 " + broadcast;
-
-localStorage.setItem("broadcast", broadcast);
-
-}
-
-if(music){
-
-document.getElementById("music")
-.src = music;
-
-localStorage.setItem("music", music);
-
-}
-
-localStorage.setItem("theme", theme);
-
-changeTheme(theme);
-
-alert("Config salva!");
-
-}
-
-// TEMA
-function changeTheme(theme){
-
-let color = "#9333ea";
-
-if(theme === "blue"){
-color = "#2563eb";
-}
-
-if(theme === "red"){
-color = "#dc2626";
-}
-
-if(theme === "green"){
-color = "#16a34a";
-}
-
-document.querySelectorAll(".bg-purple-600")
-.forEach(el=>{
-el.style.background = color;
-});
-
-}
-
-// LINKS
-function addLink(){
-
-const name =
-document.getElementById("linkName").value;
-
-const url =
-document.getElementById("linkUrl").value;
-
-if(!name || !url){
-
-alert("Preencha tudo");
-
-return;
-
-}
-
-const links =
-JSON.parse(localStorage.getItem("links")) || [];
-
-links.push({name,url});
-
-localStorage.setItem("links",
-JSON.stringify(links));
-
-document.getElementById("linkName").value = "";
-document.getElementById("linkUrl").value = "";
-
-renderLinks();
-
-}
-
-function renderLinks(){
-
-const links =
-JSON.parse(localStorage.getItem("links")) || [];
-
-const publicContainer =
-document.getElementById("publicLinks");
-
-const adminContainer =
-document.getElementById("adminLinks");
-
-publicContainer.innerHTML = "";
-adminContainer.innerHTML = "";
-
-links.forEach((link,index)=>{
-
-publicContainer.innerHTML += `
-<a
-href="${link.url}"
-target="_blank"
-class="bg-white/[0.03] border border-white/10 hover:border-purple-600 transition rounded-2xl p-5 flex items-center justify-between">
-
-<div>
-<h3 class="font-black text-lg">
-${link.name}
-</h3>
-
-<p class="text-sm text-gray-400">
-${link.url}
-</p>
-</div>
-
-<div class="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center">
-↗
-</div>
-
-</a>
-`;
-
-adminContainer.innerHTML += `
-<div
-class="bg-black/40 border border-white/10 rounded-2xl p-5 flex justify-between items-center">
-
-<div>
-<h3 class="font-black">
-${link.name}
-</h3>
-
-<p class="text-sm text-gray-400">
-${link.url}
-</p>
-</div>
-
-<button
-onclick="removeLink(${index})"
-class="bg-red-600 px-4 py-2 rounded-xl font-bold">
-Excluir
-</button>
-
-</div>
-`;
-
-});
-
-}
-
-function removeLink(index){
-
-const links =
-JSON.parse(localStorage.getItem("links")) || [];
-
-links.splice(index,1);
-
-localStorage.setItem("links",
-JSON.stringify(links));
-
-renderLinks();
-
-}
-
-// MUSIC
-const music =
-document.getElementById("music");
-
-function toggleMusic(){
-
-if(music.paused){
-
-music.play();
-
-}else{
-
-music.pause();
-
-}
-
-}
-
-// CARREGAR
-window.onload = ()=>{
-
-const savedName =
-localStorage.getItem("profileName");
-
-const savedTitle =
-localStorage.getItem("profileTitle");
-
-const savedPhoto =
-localStorage.getItem("profilePhoto");
-
-const savedBroadcast =
-localStorage.getItem("broadcast");
-
-const savedMusic =
-localStorage.getItem("music");
-
-const savedTheme =
-localStorage.getItem("theme");
-
-if(savedName){
-
-document.getElementById("profileName")
-.innerText = savedName;
-
-document.getElementById("navbarName")
-.innerText = savedName;
-
-}
-
-if(savedTitle){
-
-document.getElementById("profileTitle")
-.innerText = savedTitle;
-
-}
-
-if(savedPhoto){
-
-document.getElementById("avatar")
-.src = savedPhoto;
-
-}
-
-if(savedBroadcast){
-
-document.getElementById("broadcastBar")
-.innerHTML = "📢 " + savedBroadcast;
-
-}
-
-if(savedMusic){
-
-document.getElementById("music")
-.src = savedMusic;
-
-}
-
-if(savedTheme){
-
-changeTheme(savedTheme);
-
-}
-
-renderLinks();
-
-}
-
-// NEVE
-const snowContainer =
-document.getElementById("snow-container");
-
-for(let i=0;i<70;i++){
-
-const snow =
-document.createElement("div");
-
-snow.classList.add("snow");
-
-snow.style.left =
-Math.random()*100+"vw";
-
-snow.style.animationDuration =
-(Math.random()*5+5)+"s";
-
-snow.style.opacity =
-Math.random();
-
-snow.style.width =
-snow.style.height =
-(Math.random()*4+2)+"px";
-
-snowContainer.appendChild(snow);
-
-}
-
-// PLAYER DRAG
-const player =
-document.querySelector(".player");
-
-let drag = false;
-let offsetX;
-let offsetY;
-
-player.addEventListener("mousedown",(e)=>{
-
-drag = true;
-
-offsetX = e.clientX - player.offsetLeft;
-offsetY = e.clientY - player.offsetTop;
-
-});
-
-document.addEventListener("mousemove",(e)=>{
-
-if(!drag) return;
-
-player.style.left =
-(e.clientX-offsetX)+"px";
-
-player.style.top =
-(e.clientY-offsetY)+"px";
-
-});
-
-document.addEventListener("mouseup",()=>{
-
-drag = false;
-
-});
-
+  snow();
 </script>
 
 </body>
